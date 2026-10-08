@@ -3,24 +3,24 @@ const fs = require("fs");
 const request = require("request");
 
 const link = [
-  "https://imgur.com/q90LwHB.mp4",
-  "https://imgur.com/p7wQCx6.mp4",
-  "https://imgur.com/p1dHcMS.mp4",
-  "https://imgur.com/xvdyZtT.mp4",
-  "https://imgur.com/VL4fJWJ.mp4",
-  "https://imgur.com/fAR2p8n.mp4",
-  "https://imgur.com/q90LwHB.mp4",
-  "https://imgur.com/GVIC9uR.mp4"
+  "https://i.imgur.com/VTMDDv6.mp4",
+  "https://i.imgur.com/GErxTCo.mp4",
+  "https://i.imgur.com/1ocMyCc.mp4",
+  "https://i.imgur.com/N0ndewv.mp4",
+  "https://i.imgur.com/FGu1yMW.mp4",
+  "https://i.imgur.com/ZIQdoGE.mp4",
+  "https://i.imgur.com/DyvLM8q.mp4",
+  "https://i.imgur.com/2h8mf17.mp4C"
 ];
 
 module.exports.config = {
-  name: "😅",
+  name: "💔",
   version: "1.0.0",
   hasPermssion: 0,
   credits: "RX Abdullah",
-  description: "auto reply to 😅 with text and video",
+  description: "auto reply to 💔 with text and video",
   commandCategory: "noprefix",
-  usages: "😅",
+  usages: "💔",
   cooldowns: 5,
   dependencies: {
     "request": "",
@@ -35,17 +35,17 @@ module.exports.handleEvent = async ({ api, event, Threads }) => {
 
   // Check if feature is enabled
   let data = (await Threads.getData(event.threadID)).data || {};
-  if (data["😅"] === false) return;
+  if (data["💔"] === false) return;
 
-  if (body.startsWith("😅")) {
+  if (body.startsWith("💔")) {
     const texts = [
-      "╭•┄┅════❁🌺❁════┅┄•╮\n⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ倫 𝐉⃞𝐔⃞𝐖⃞𝐄⃞𝐋༢࿐\n╰•┄┅════❁🌺❁════┅┄•╯",
-      "╭•┄┅════❁🎀❁════┅┄•╮\n⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ倫 𝐉⃞𝐔⃞𝐖⃞𝐄⃞𝐋༢࿐\n╰•┄┅════❁🎀❁════┅┄•╯"
+      "╭•┄┅════❁🌺❁════┅┄•╮\n⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐\n╰•┄┅════❁🌺❁════┅┄•╯",
+      "╭•┄┅════❁🎀❁════┅┄•╮\n⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐\n╰•┄┅════❁🎀❁════┅┄•╯"
     ];
 
     const randomText = texts[Math.floor(Math.random() * texts.length)];
     const randomVideo = link[Math.floor(Math.random() * link.length)];
-    const filePath = __dirname + "/cache/😅.mp4";
+    const filePath = __dirname + "/cache/💔.mp4";
 
     const callback = () => api.sendMessage({
       body: randomText,
@@ -59,13 +59,13 @@ module.exports.handleEvent = async ({ api, event, Threads }) => {
 
 module.exports.languages = {
   "vi": {
-    "on": "Đã bật phản hồi 😅",
-    "off": "Đã tắt phản hồi 😅",
+    "on": "Đã bật phản hồi 💔",
+    "off": "Đã tắt phản hồi 💔",
     "successText": `🧠`,
   },
   "en": {
-    "on": "😅 auto-reply is ON",
-    "off": "😅 auto-reply is OFF",
+    "on": "💔 auto-reply is ON",
+    "off": "💔 auto-reply is OFF",
     "successText": "✅",
   }
 };
@@ -74,14 +74,14 @@ module.exports.run = async ({ api, event, Threads, getText }) => {
   const { threadID, messageID } = event;
   let data = (await Threads.getData(threadID)).data || {};
 
-  // Toggle the 😅 feature
-  data["😅"] = !data["😅"];
+  // Toggle the 💔 feature
+  data["💔"] = !data["💔"];
 
   await Threads.setData(threadID, { data });
   global.data.threadData.set(threadID, data);
 
   api.sendMessage(
-    `${data["😅"] ? getText("on") : getText("off")} ${getText("successText")}`,
+    `${data["💔"] ? getText("on") : getText("off")} ${getText("successText")}`,
     threadID,
     messageID
   );
