@@ -14,7 +14,7 @@
   "PASSWORD": "Facebook password",
   "OTPKEY": "Facebook 2FA Secret Key",
   "BOTNAME": " ⎯꯭𓆩꯭𝆺𝅥😻⃞𝐑⃞𝐈⃞𝐘𝐀⃞༢࿐",
-  "PREFIX": "/",
+  "PREFIX": "!",
   "usePrefix": true,
   "reactUnsend": [
     "😡",
@@ -30,7 +30,7 @@
   "DEVELOPER": [
     "61594956550120"
   ],
-  "APPSTATEPATH": "appstate.json",
+  PPSTATEPATH"H": "appstate.json",
   "FCAOption": {
     "selfListen": false,
     "listenEvents": true,
