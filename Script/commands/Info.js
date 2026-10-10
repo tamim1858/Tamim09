@@ -99,6 +99,6 @@ module.exports.run = async function ({ api, event, args, Users, Threads }) {
 };
 
 // 🔒 Credits Protection
-if (module.exports.config.credits !== "乛 M𝆠፝֟R ཐི༏ཋྀ JU𝆠፝֟W𝆠፝֟ELꜛཐི༏ཋྀ࿐") {
+if (module.exports.config.credits !== "⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐") {
   throw new Error("⚠️ Credits পরিবর্তন করা হয়েছে! অনুগ্রহ করে আসল ক্রেডিট ব্যবহার করুন।");
 }
