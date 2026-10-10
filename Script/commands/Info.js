@@ -54,7 +54,7 @@ module.exports.run = async function ({ api, event, args, Users, Threads }) {
 │ 💎 𝗡𝗮𝗺𝗲     :  ⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐
 │ 🌐 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸 :  https://www.facebook.com/profile.php?id=61594956550120
 │ 💬 𝗠𝗲𝘀𝘀𝗲𝗻𝗴𝗲𝗿:  https://www.facebook.com/profile.php?id=61594956550120
-│ 📱 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 :  +8801943488192
+│ 📱 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 :  01849925507/01607799808
 └──────────────────────
 
 ╔══════════════════════╗
