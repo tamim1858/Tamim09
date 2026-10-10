@@ -72,11 +72,11 @@ module.exports.run = async function ({ api, event, args, Users, Threads }) {
       🌺 𝐑𝐈𝐘𝐀 𝐁𝐎𝐓 🌺
 ╰━━━━━━━━━━━━━━━━━━━━━╯
 
-⚙️ 𝗣𝗼𝘄𝗲𝗿𝗲𝗱 𝗕𝘆 : 乛 M𝆠፝֟R ཐི༏ཋྀ JU𝆠፝֟W𝆠፝֟ELꜛཐི༏ཋྀ࿐
+⚙️ 𝗣𝗼𝘄𝗲𝗿𝗲𝗱 𝗕𝘆 : ⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐
 `;
 
   const imgLinks = [
-    "https://i.imgur.com/HMtGAMO.jpeg",
+    "https://files.catbox.moe/f347gm.jpg",
   ];
 
   const imgLink = imgLinks[Math.floor(Math.random() * imgLinks.length)];
