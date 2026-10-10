@@ -2,7 +2,7 @@ module.exports.config = {
   name: "info",
   version: "1.3.0",
   hasPermssion: 0,
-  credits: "乛 M𝆠፝֟R ཐི༏ཋྀ JU𝆠፝֟W𝆠፝֟ELꜛཐི༏ཋྀ࿐",
+  credits: "乛 ⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐",
   description: "Bot information command",
   commandCategory: "For users",
   hide: true,
@@ -39,7 +39,7 @@ module.exports.run = async function ({ api, event, args, Users, Threads }) {
 ╚══════════════════════╝
 
 ┌──────────────────────
-│ 🏷️ 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲    :  𝐑𝐈𝐘𝐀
+│ 🏷️ 𝗕𝗼𝘁 𝗡𝗮𝗺𝗲    : ⎯꯭𓆩꯭𝆺𝅥😻⃞𝐑⃞𝐈⃞𝐘𝐀⃞༢࿐
 │ ⚡ 𝗣𝗿𝗲𝗳𝗶𝘅      :  ${config.PREFIX}
 │ 📌 𝗕𝗼𝘅 𝗣𝗿𝗲𝗳𝗶𝘅  :  ${prefix}
 │ 🧩 𝗠𝗼𝗱𝘂𝗹𝗲𝘀     :  ${commands.size}
@@ -51,9 +51,9 @@ module.exports.run = async function ({ api, event, args, Users, Threads }) {
 ╚══════════════════════╝
 
 ┌──────────────────────
-│ 💎 𝗡𝗮𝗺𝗲     :  乛 M𝆠፝֟R ཐི༏ཋྀ JU𝆠፝֟W𝆠፝֟ELꜛཐི༏ཋྀ࿐
-│ 🌐 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸 :  fb.com/mrjuwel444
-│ 💬 𝗠𝗲𝘀𝘀𝗲𝗻𝗴𝗲𝗿:  m.me/mrjuwel444
+│ 💎 𝗡𝗮𝗺𝗲     :  ⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐
+│ 🌐 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸 :  https://www.facebook.com/profile.php?id=61594956550120
+│ 💬 𝗠𝗲𝘀𝘀𝗲𝗻𝗴𝗲𝗿:  https://www.facebook.com/profile.php?id=61594956550120
 │ 📱 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 :  +8801943488192
 └──────────────────────
 
