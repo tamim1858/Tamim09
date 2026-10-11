@@ -3,12 +3,19 @@ const statusFilePath = __dirname + '/antigaliStatus.json';
 
 // ================== কনফিগ ==================
 let antiGaliStatus = true;
-const BOT_ADMINS = ['61591542717221'];
+
+// 👑 Admin UID + 🤖 Bot UID
+const BOT_ADMINS = ['61594956550120', '61595138616005'];
+
 const BRAND_NAME = '乛 M𝆠፝֟R ཐི༏ཋྀ JU𝆠፝֟W𝆠፝֟ELꜛཐི༏ཋྀ࿐';
 
+// কতবার গালি দিলে কিক হবে
 const KICK_THRESHOLD = 3;
+
+// প্রতি বার ওয়ার্নিং দেবে কি না (true = প্রতি গালিতে গ্রুপে warning যাবে)
 const WARN_ON_EVERY_MESSAGE = true;
 
+// স্ট্যাটাস লোড
 try {
     if (fs.existsSync(statusFilePath)) {
         const data = JSON.parse(fs.readFileSync(statusFilePath, 'utf8'));
@@ -40,12 +47,14 @@ const badWords = [
 ];
 
 // ================== Offense Tracker ==================
+// { threadID: { senderID: { count, lastMessageID } } }
 let offenseTracker = {};
 
 // ================== নোটিফিকেশন ফ্রেম ==================
 const createNotificationFrame = (title, body, type = 'info') => {
     const icons = { warning: '🚫', danger: '⚠️', info: 'ℹ️', success: '✅' };
     const icon = icons[type] || 'ℹ️';
+
     let msg = `${icon} ${title}\n`;
     msg += '━━━━━━━━━━━━━━━━━━━━\n';
     msg += body + '\n';
@@ -54,11 +63,10 @@ const createNotificationFrame = (title, body, type = 'info') => {
     return msg;
 };
 
-// ================== বট UID বের করা (সব fallback) ==================
+// ================== বট UID বের করা ==================
 async function getBotUID(api) {
     let uid = null;
 
-    // 1. getCurrentUserID
     try {
         if (typeof api.getCurrentUserID === 'function') {
             uid = api.getCurrentUserID();
@@ -66,29 +74,20 @@ async function getBotUID(api) {
         }
     } catch {}
 
-    // 2. global.data.botID
-    if (!uid) {
-        try { uid = global?.data?.botID; } catch {}
-    }
+    if (!uid) { try { uid = global?.data?.botID; } catch {} }
+    if (!uid) { try { uid = global?.botID; } catch {} }
+    if (!uid) { try { uid = global?.client?.botID; } catch {} }
 
-    // 3. global.botID
-    if (!uid) {
-        try { uid = global?.botID; } catch {}
-    }
-
-    // 4. global.client.botID
-    if (!uid) {
-        try { uid = global?.client?.botID; } catch {}
-    }
+    // fallback: আপনার দেওয়া বট UID
+    if (!uid) uid = '61595138616005';
 
     return uid ? String(uid) : null;
 }
 
-// ================== অ্যাডমিন আইডি ডিটেক্ট (সব ফরম্যাট) ==================
+// ================== অ্যাডমিন আইডি বের করা ==================
 function extractAdminIDs(threadInfo) {
     if (!threadInfo) return [];
 
-    // সম্ভাব্য সব ফিল্ড
     const candidateFields = [
         'adminIDs', 'adminID', 'adminIds', 'admins',
         'admin_ids', 'adminId', 'AdminIDs'
@@ -102,16 +101,12 @@ function extractAdminIDs(threadInfo) {
         }
     }
 
-    // adminIDs না পেলে userInfo/adminInfo থেকে বের করার চেষ্টা
-    if ((!raw || (Array.isArray(raw) && raw.length === 0))) {
-        // কিছু FCA-তে userInfo তে admin flag থাকে
-        if (threadInfo.userInfo && Array.isArray(threadInfo.userInfo)) {
-            const adminFromUsers = threadInfo.userInfo
-                .filter(u => u.isAdmin === true || u.admin === true || u.type === 'admin')
-                .map(u => u.id || u.userID || u.uid)
-                .filter(Boolean);
-            if (adminFromUsers.length > 0) return adminFromUsers.map(String);
-        }
+    if ((!raw || (Array.isArray(raw) && raw.length === 0)) && Array.isArray(threadInfo.userInfo)) {
+        const adminFromUsers = threadInfo.userInfo
+            .filter(u => u.isAdmin === true || u.admin === true || u.type === 'admin')
+            .map(u => u.id || u.userID || u.uid)
+            .filter(Boolean);
+        if (adminFromUsers.length > 0) return adminFromUsers.map(String);
     }
 
     if (!Array.isArray(raw)) raw = [raw];
@@ -132,12 +127,12 @@ function extractAdminIDs(threadInfo) {
 // ================== মডিউল কনফিগ ==================
 module.exports.config = {
     name: 'antigali',
-    version: '5.2.0',
+    version: '6.0.0',
     hasPermssion: 0,
     credits: 'MR JUWEL',
     description: '৩ বার গালি দিলে অটো কিক',
     commandCategory: 'moderation',
-    usages: '[on/off/status/reset]',
+    usages: '[on/off/status/reset/debug]',
     cooldowns: 3
 };
 
@@ -150,7 +145,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
         const botUID = await getBotUID(api);
         if (botUID && String(event.senderID) === botUID) return;
 
-        const body = event.body.toLowerCase();
+        const body = String(event.body).toLowerCase();
         const threadID = String(event.threadID);
         const senderID = String(event.senderID);
 
@@ -189,15 +184,18 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
         const adminIDs = extractAdminIDs(threadInfo);
         const threadName = threadInfo.threadName || threadInfo.name || 'Unknown Group';
         const isAdmin = (uid) => uid && adminIDs.includes(String(uid));
-        const botIsAdmin = botUID ? isAdmin(botUID) : false;
 
-        // ===== ডিবাগ লগ — টার্মিনালে দেখুন =====
+        // ⭐ বট অ্যাডমিন কি না — গ্রুপ অ্যাডমিন লিস্ট অথবা BOT_ADMINS
+        const botIsAdmin =
+            (botUID && isAdmin(botUID)) ||
+            (botUID && BOT_ADMINS.map(String).includes(botUID)) ||
+            BOT_ADMINS.map(String).includes('61595138616005');
+
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('[antigali] botUID       :', botUID);
         console.log('[antigali] botIsAdmin   :', botIsAdmin);
         console.log('[antigali] adminIDs     :', adminIDs);
         console.log('[antigali] senderID     :', senderID);
-        console.log('[antigali] isSenderAdmin:', isAdmin(senderID));
         console.log('[antigali] count        :', count);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
@@ -222,7 +220,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
             return;
         }
 
-        // ===== ৩য় বার =====
+        // ===== ৩য় বার — অ্যাডমিনদের অ্যালার্ট =====
         const alertMsg = createNotificationFrame(
             '🚨 Anti-Gali Alert',
             `👥 গ্রুপ: ${threadName}\n` +
@@ -242,7 +240,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
             try { await api.sendMessage(alertMsg, bid); } catch {}
         }
 
-        // ---- বট অ্যাডমিন না হলে ----
+        // ---- বট অ্যাডমিন না হলে কিক হবে না ----
         if (!botIsAdmin) {
             offense.count = KICK_THRESHOLD - 1;
             console.log('[antigali] ⛔ botIsAdmin false — কিক স্কিপড');
@@ -251,16 +249,15 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
                     '⚠️ কিক করা যায়নি',
                     `আমি (বট) এই গ্রুপের অ্যাডমিন নই, তাই কাউকে কিক করতে পারছি না।\n\n` +
                     `👤 ইউজার: ${userName}\n🆔 UID: ${senderID}\n\n` +
-                    `📌 আমাকে গ্রুপ অ্যাডমিন বানান।\n\n` +
-                    `🔍 Debug: botUID=${botUID}, admins=${adminIDs.join(',')}`,
+                    `📌 গ্রুপ সেটিংস থেকে বটকে অ্যাডমিন বানান।`,
                     'danger'
                 ),
                 threadID
             );
         }
 
-        // ---- ইউজার নিজেই অ্যাডমিন ----
-        if (isAdmin(senderID)) {
+        // ---- ইউজার নিজেই অ্যাডমিন (BOT_ADMINS বাদে) হলে কিক হবে না ----
+        if (isAdmin(senderID) && !BOT_ADMINS.map(String).includes(senderID)) {
             offense.count = KICK_THRESHOLD - 1;
             return api.sendMessage(
                 createNotificationFrame(
@@ -324,6 +321,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
             );
         }
 
+        // মেসেজ unsend
         if (event.messageID && typeof api.unsendMessage === 'function') {
             try { await api.unsendMessage(event.messageID); } catch {}
         }
@@ -368,14 +366,18 @@ module.exports.run = async function ({ api, event, args }) {
             createNotificationFrame('✅ Anti-Gali ON', 'Anti-Gali সিস্টেম চালু হয়েছে।', 'success'),
             threadID
         );
-    } else if (action === 'off') {
+    }
+
+    if (action === 'off') {
         antiGaliStatus = false;
         saveStatus();
         return api.sendMessage(
             createNotificationFrame('🚫 Anti-Gali OFF', 'Anti-Gali সিস্টেম বন্ধ হয়েছে।', 'warning'),
             threadID
         );
-    } else if (action === 'status') {
+    }
+
+    if (action === 'status') {
         let report = '';
         const groupData = offenseTracker[threadID] || {};
         const entries = Object.entries(groupData).filter(([, v]) => v.count > 0);
@@ -403,25 +405,29 @@ module.exports.run = async function ({ api, event, args }) {
             ),
             threadID
         );
-    } else if (action === 'reset') {
+    }
+
+    if (action === 'reset') {
         if (offenseTracker[threadID]) offenseTracker[threadID] = {};
         return api.sendMessage(
             createNotificationFrame('✅ Reset', 'এই গ্রুপের সব ওয়ার্নিং রিসেট হয়েছে।', 'success'),
             threadID
         );
-    } else if (action === 'debug') {
-        // বটের UID ও অ্যাডমিন লিস্ট দেখাবে
+    }
+
+    if (action === 'debug') {
         const botUID = await getBotUID(api);
         let info = {};
-        try { info = await api.getThreadInfo(threadID) || {}; } catch {}
+        try { info = (await api.getThreadInfo(threadID)) || {}; } catch {}
         const admins = extractAdminIDs(info);
 
         return api.sendMessage(
             createNotificationFrame(
                 '🔍 Debug Info',
                 `🤖 Bot UID: ${botUID || 'পাওয়া যায়নি'}\n` +
-                `👑 Bot Admin?: ${botUID && admins.includes(botUID) ? '✅ হ্যাঁ' : '❌ না'}\n\n` +
-                `📋 Admin List (${admins.length}):\n${admins.join('\n') || 'খালি'}\n\n` +
+                `👑 Bot Admin?: ${admins.includes(String(botUID)) ? '✅ হ্যাঁ' : '❌ না'}\n` +
+                `📋 BOT_ADMINS: ${BOT_ADMINS.join(', ')}\n\n` +
+                `👥 Group Admins (${admins.length}):\n${admins.join('\n') || 'খালি'}\n\n` +
                 `📦 threadInfo keys:\n${Object.keys(info).join(', ')}`,
                 'info'
             ),
