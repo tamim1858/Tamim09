@@ -3,11 +3,11 @@ const statusFilePath = __dirname + '/antigaliStatus.json';
 
 // ================== কনফিগ ==================
 let antiGaliStatus = true;
-const BOT_ADMINS = ['61591542717221']; // আপনার বট/ওনার UID
+const BOT_ADMINS = ['61591542717221'];
 const BRAND_NAME = '乛 M𝆠፝֟R ཐི༏ཋྀ JU𝆠፝֟W𝆠፝֟ELꜛཐི༏ཋྀ࿐';
 
-// কতবার গালি দিলে কিক হবে
 const KICK_THRESHOLD = 3;
+const WARN_ON_EVERY_MESSAGE = true; // প্রতি বার গ্রুপে ওয়ার্নিং দেবে কি না
 
 try {
     if (fs.existsSync(statusFilePath)) {
@@ -40,7 +40,6 @@ const badWords = [
 ];
 
 // ================== Offense Tracker ==================
-// { threadID: { senderID: { count, lastMessageID } } }
 let offenseTracker = {};
 
 // ================== নোটিফিকেশন ফ্রেম ==================
@@ -57,21 +56,42 @@ const createNotificationFrame = (title, body, type = 'info') => {
 };
 
 // ================== হেল্পার ==================
-async function getBotUID(api) {
+
+// বট UID বের করার শক্তিশালী ফাংশন
+async function getBotUID(api, event) {
+    let uid = null;
     try {
-        let uid = api.getCurrentUserID ? api.getCurrentUserID() : null;
-        if (uid && typeof uid.then === 'function') uid = await uid;
-        return uid ? String(uid) : null;
-    } catch {
-        return null;
-    }
+        if (typeof api.getCurrentUserID === 'function') {
+            uid = api.getCurrentUserID();
+            if (uid && typeof uid.then === 'function') uid = await uid;
+        }
+    } catch {}
+    
+    // fallback: global bot ID
+    if (!uid && global?.data?.botID) uid = global.data.botID;
+    if (!uid && global?.botID) uid = global.botID;
+    
+    return uid ? String(uid) : null;
 }
 
+// অ্যাডমিন লিস্ট normalize — সব ফরম্যাট handle করবে
 function normalizeAdminIDs(threadInfo) {
-    let raw = threadInfo?.adminIDs || threadInfo?.adminID || [];
+    if (!threadInfo) return [];
+    
+    let raw = threadInfo.adminIDs || threadInfo.adminID || 
+              threadInfo.admins || threadInfo.adminIds || [];
+    
     if (!Array.isArray(raw)) raw = [raw];
+    
     return raw
-        .map(a => (typeof a === 'string' ? a : a && a.id))
+        .map(a => {
+            if (typeof a === 'string') return a;
+            if (typeof a === 'number') return String(a);
+            if (a && typeof a === 'object') {
+                return String(a.id || a.userID || a.uid || a.userId || '');
+            }
+            return '';
+        })
         .filter(Boolean)
         .map(String);
 }
@@ -79,7 +99,7 @@ function normalizeAdminIDs(threadInfo) {
 // ================== মডিউল কনফিগ ==================
 module.exports.config = {
     name: 'antigali',
-    version: '5.0.0',
+    version: '5.1.0',
     hasPermssion: 0,
     credits: 'MR JUWEL',
     description: '৩ বার গালি দিলে অটো কিক',
@@ -93,8 +113,13 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
     try {
         if (!antiGaliStatus) return;
         if (!event.body || !event.threadID || !event.senderID) return;
+        if (event.type !== 'message' && event.type !== 'message_reply') {
+            // শুধু মেসেজ ইভেন্টে কাজ করবে
+        }
 
-        const botUID = await getBotUID(api);
+        const botUID = await getBotUID(api, event);
+        
+        // বট নিজে হলে স্কিপ
         if (botUID && String(event.senderID) === botUID) return;
 
         const body = event.body.toLowerCase();
@@ -116,21 +141,14 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
         offense.lastMessageID = event.messageID;
         const count = offense.count;
 
-        // ⛔ ১ম ও ২য় বার → কিছুই করবে না, চুপচাপ গুনে রাখবে
-        if (count < KICK_THRESHOLD) {
-            return;
-        }
-
-        // ===== ৩য় বার (বা তার বেশি) হলে সম্পূর্ণ অ্যাকশন =====
-
-        // ইউজার ইনফো
+        // ===== ইউজার ইনফো =====
         let userName = 'অজানা ব্যবহারকারী';
         try {
             const uInfo = await api.getUserInfo(senderID);
             if (uInfo?.[senderID]?.name) userName = uInfo[senderID].name;
         } catch {}
 
-        // থ্রেড ইনফো
+        // ===== থ্রেড ইনফো =====
         let threadInfo = {};
         try {
             if (typeof api.getThreadInfo === 'function') {
@@ -147,7 +165,33 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
         const isAdmin = (uid) => adminIDs.includes(String(uid));
         const botIsAdmin = botUID ? isAdmin(botUID) : false;
 
-        // ---------- অ্যাডমিনদের ইনবক্সে অ্যালার্ট ----------
+        // ডিবাগ লগ (কনসোল এ দেখতে পাবেন)
+        console.log('[antigali] botUID:', botUID, '| botIsAdmin:', botIsAdmin, '| adminIDs:', adminIDs.join(','));
+
+        // ===== ১ম ও ২য় বার =====
+        if (count < KICK_THRESHOLD) {
+            if (WARN_ON_EVERY_MESSAGE) {
+                try {
+                    await api.sendMessage(
+                        createNotificationFrame(
+                            '⚠️ সতর্কতা',
+                            `👤 ${userName}\n` +
+                            `⚠️ অশালীন শব্দ ব্যবহার করা হয়েছে!\n` +
+                            `📊 ওয়ার্নিং: ${count}/${KICK_THRESHOLD}\n\n` +
+                            `আর ${KICK_THRESHOLD - count} বার করলে গ্রুপ থেকে কিক করা হবে।`,
+                            'warning'
+                        ),
+                        threadID,
+                        event.messageID
+                    );
+                } catch {}
+            }
+            return;
+        }
+
+        // ===== ৩য় বার — সম্পূর্ণ অ্যাকশন =====
+
+        // অ্যাডমিনদের ইনবক্সে অ্যালার্ট
         const alertMsg = createNotificationFrame(
             '🚨 Anti-Gali Alert',
             `👥 গ্রুপ: ${threadName}\n` +
@@ -163,12 +207,13 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
             try { await api.sendMessage(alertMsg, aid); } catch {}
         }
         for (const bid of BOT_ADMINS) {
+            if (botUID && String(bid) === botUID) continue;
             try { await api.sendMessage(alertMsg, bid); } catch {}
         }
 
-        // ---------- বট অ্যাডমিন না হলে কিক করা যাবে না ----------
+        // বট অ্যাডমিন না হলে কিক করা যাবে না
         if (!botIsAdmin) {
-            offense.count = KICK_THRESHOLD - 1; // আবার ট্রিগার হবে
+            offense.count = KICK_THRESHOLD - 1;
             return api.sendMessage(
                 createNotificationFrame(
                     '⚠️ কিক করা যায়নি',
@@ -181,7 +226,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
             );
         }
 
-        // ---------- কিক করা ইউজার নিজেই অ্যাডমিন হলে কিক করা যাবে না ----------
+        // কিক করা ইউজার নিজেই অ্যাডমিন হলে
         if (isAdmin(senderID)) {
             offense.count = KICK_THRESHOLD - 1;
             return api.sendMessage(
@@ -196,7 +241,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
             );
         }
 
-        // ---------- গ্রুপে নোটিশ + অটো কিক ----------
+        // গ্রুপে নোটিশ + অটো কিক
         try {
             await api.sendMessage(
                 createNotificationFrame(
@@ -212,11 +257,9 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
 
             await api.removeUserFromGroup(senderID, threadID);
 
-            // tracker রিসেট
             offense.count = 0;
             offense.lastMessageID = null;
 
-            // কিকের পর অ্যাডমিনদের আরেকবার কনফার্মেশন
             const doneMsg = createNotificationFrame(
                 '✅ কিক সম্পন্ন',
                 `👥 গ্রুপ: ${threadName}\n` +
@@ -231,6 +274,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
                 try { await api.sendMessage(doneMsg, aid); } catch {}
             }
             for (const bid of BOT_ADMINS) {
+                if (botUID && String(bid) === botUID) continue;
                 try { await api.sendMessage(doneMsg, bid); } catch {}
             }
         } catch (e) {
@@ -246,8 +290,7 @@ module.exports.handleEvent = async function ({ api, event, Threads }) {
             );
         }
 
-        // ---------- আগের মেসেজগুলো আনসেন্ড (কিকের পর) ----------
-        // (মেসেজ ডিলিট করতে চাইলে এখানে রাখা হলো)
+        // মেসেজ unsend
         if (event.messageID && typeof api.unsendMessage === 'function') {
             try { await api.unsendMessage(event.messageID); } catch {}
         }
@@ -300,7 +343,6 @@ module.exports.run = async function ({ api, event, args }) {
             threadID
         );
     } else if (action === 'status') {
-        // এই গ্রুপের সব ইউজারের warning count দেখাবে
         let report = '';
         const groupData = offenseTracker[threadID] || {};
         const entries = Object.entries(groupData).filter(([, v]) => v.count > 0);
@@ -334,20 +376,6 @@ module.exports.run = async function ({ api, event, args }) {
             createNotificationFrame('✅ Reset', 'এই গ্রুপের সব ওয়ার্নিং রিসেট হয়েছে।', 'success'),
             threadID
         );
-    } else if (action === 'set' && args[1]) {
-        // ভবিষ্যতে threshold পরিবর্তনের জন্য (দরকার হলে)
-        const num = parseInt(args[1]);
-        if (num > 0) {
-            // এখানে const KICK_THRESHOLD পরিবর্তন করতে হবে → let করে নিন
-            return api.sendMessage(
-                createNotificationFrame(
-                    'ℹ️ তথ্য',
-                    `বর্তমান threshold: ${KICK_THRESHOLD}\nপরিবর্তন করতে চাইলে কোডে গিয়ে KICK_THRESHOLD ভেরিয়েবল এডিট করুন।`,
-                    'info'
-                ),
-                threadID
-            );
-        }
     }
 
     return api.sendMessage(
