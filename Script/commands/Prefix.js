@@ -24,11 +24,17 @@ module.exports.handleEvent = async ({ event, api, Threads }) => {
   }
 
   // ⚙️ Prefix & thread info
-  const dataThread = await Threads.getData(threadID);
-  const data = dataThread.data || {};
-  const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
-  const prefix = threadSetting.PREFIX || global.config.PREFIX;
-  const groupName = dataThread.threadInfo?.threadName || "Unnamed Group";
+  let prefix = global.config.PREFIX;
+  let groupName = "Unnamed Group";
+  try {
+    const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
+    prefix = threadSetting.PREFIX || global.config.PREFIX;
+
+    const dataThread = await Threads.getData(threadID);
+    groupName = dataThread?.threadInfo?.threadName || "Unnamed Group";
+  } catch (e) {
+    // ignore errors, use defaults
+  }
 
   // 🌐 Multi-language trigger words
   const triggerWords = [
@@ -76,13 +82,12 @@ module.exports.handleEvent = async ({ event, api, Threads }) => {
   const totalUsers   = global.data.allUserID?.length   || 0;
   const totalThreads = global.data.allThreadID?.length || 0;
 
-  // 🎯 Pull from config (fallback সহ)
-  const botName   = global.config.BOTNAME     || "⎯꯭𓆩꯭𝆺𝅥😻⃞𝐑⃞𝐈⃞𝐘⃞𝐀⃞༢࿐";
-  const ownerName = global.config.OWNER_NAME  || "乛 M𝆠፝֟R ཐི༏ཋྀ JU𝆠፝֟W𝆠፝֟ELꜛཐི༏ཋྀ࿐";
-  const ownerFB   = global.config.OWNER_FB    || "fb.com/mrjuwe444";
-  const ownerMSG  = global.config.OWNER_MSG   || "mrjuwel444";
-  const ownerWA   = global.config.OWNER_WA    || "+8801943488192";
-  const adminUID  = global.config.ADMINBOT?.[0] || "N/A";
+  // 🎯 Fixed values (100% কাজ করবে)
+  const botName   = "⎯꯭𓆩꯭𝆺𝅥😻⃞𝐑⃞𝐈⃞𝐘𝐀⃞༢࿐";
+  const ownerName = "⎯꯭𓆩꯭𝆺𝅥😻⃞𝐌⃞𝆠፝֟𝐑᭄ღ 𝐓⃞𝐀⃞𝐌⃞𝐈⃞𝐌༢࿐";
+  const ownerMSG  = "tamim09";
+  const ownerWA   = "01849925507";
+  const adminUID  = (global.config.ADMINBOT && global.config.ADMINBOT[0]) || "N/A";
 
   // 📩 Send formatted message
   return api.sendMessage(
@@ -108,13 +113,12 @@ module.exports.handleEvent = async ({ event, api, Threads }) => {
 ║  ━━━━━━━━━━━━━━━
 ║  ➤ 👤 Name : ${ownerName}
 ║  ➤ 🆔 UID  : ${adminUID}
-║  ➤ 🌐 FB   : ${ownerFB}
 ║  ➤ 💬 MSG  : ${ownerMSG}
 ║  ➤ 📱 WA   : ${ownerWA}
 ║
 ╠═━⌬ THANK YOU ⌬━═╣
 ║  Thanks for using RIYA BOT ✨
-╚═━━⌬ POWERED BY MR JUWEL ⌬━━═╝`,
+╚═━━⌬ POWERED BY TAMIM ⌬━━═╝`,
     threadID,
     null
   );
